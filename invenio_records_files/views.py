@@ -19,7 +19,30 @@ from invenio_records_rest.views import pass_record
 from six import iteritems
 from six.moves.urllib.parse import urljoin
 
+from .api import Record
 from .serializer import serializer_mapping
+
+
+def pass_record_with_bucket(f):
+    """Decorator to enhance a record with a bucket if it doesn't have one.
+
+    This decorator will check if the passed record has a bucket. If it doesn't
+    have a bucket a new one will be created and added to the record.
+    """
+    @wraps(f)
+    def inner(self, record, *args, **kwargs):
+        if record and not record.has_bucket:
+            # import wdb; wdb.set_trace()
+            # TODO: Add bucket to record if it doesn't have one.
+            # For backwards compatilibity with e.g. Invenio 3.1 which doesn't
+            # create a bucket by default
+            # bucket = Record.create_bucket(record)
+            # if bucket:
+            #     Record.dump_bucket(record, bucket)
+            pass
+        return f(self, record=record, *args, **kwargs)
+
+    return pass_record(inner)
 
 
 def create_blueprint_from_app(app):
@@ -94,7 +117,7 @@ def pass_bucket_id(f):
 class RecordBucketResource(BucketResource):
     """RecordBucket item resource."""
 
-    @pass_record
+    @pass_record_with_bucket
     @pass_bucket_id
     def get(self, pid, record, **kwargs):
         """Get list of objects in the bucket.
@@ -106,7 +129,7 @@ class RecordBucketResource(BucketResource):
         """
         return super(RecordBucketResource, self).get(**kwargs)
 
-    @pass_record
+    @pass_record_with_bucket
     @pass_bucket_id
     def head(self, pid, record, **kwargs):
         """Check the existence of the bucket.
@@ -121,7 +144,7 @@ class RecordBucketResource(BucketResource):
 class RecordObjectResource(ObjectResource):
     """RecordObject item resource."""
 
-    @pass_record
+    @pass_record_with_bucket
     @pass_bucket_id
     def get(self, pid, record, **kwargs):
         """Get object or list parts of a multpart upload.
@@ -133,7 +156,7 @@ class RecordObjectResource(ObjectResource):
         """
         return super(RecordObjectResource, self).get(**kwargs)
 
-    @pass_record
+    @pass_record_with_bucket
     @pass_bucket_id
     def put(self, pid, record, **kwargs):
         """Update a new object or upload a part of a multipart upload.
@@ -145,7 +168,7 @@ class RecordObjectResource(ObjectResource):
         """
         return super(RecordObjectResource, self).put(**kwargs)
 
-    @pass_record
+    @pass_record_with_bucket
     @pass_bucket_id
     def delete(self, pid, record, **kwargs):
         """Delete an object or abort a multipart upload.

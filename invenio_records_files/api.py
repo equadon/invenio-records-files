@@ -367,6 +367,11 @@ class Record(_Record, FilesMixin):
         return record.get("_bucket", "")
 
     @property
+    def has_bucket(self):
+        """Check if the record has a bucket."""
+        return self.bucket_id != ""
+
+    @property
     def bucket_id(self):
         """Get bucket id from record metadata."""
         return self.load_bucket(self)
